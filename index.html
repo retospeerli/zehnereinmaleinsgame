@@ -1,0 +1,746 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <title>2-stelliges Einmaleins – Ringkampf</title>
+  <style>
+    :root {
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background: #e5e7eb;
+    }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .app {
+      background: #ffffff;
+      border-radius: 18px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.12);
+      padding: 2rem 2.5rem;
+      max-width: 820px;
+      width: 100%;
+      box-sizing: border-box;
+    }
+    h1 {
+      margin-top: 0;
+      text-align: center;
+      font-size: 1.7rem;
+    }
+    .subtitle {
+      text-align: center;
+      color: #4b5563;
+      margin-bottom: 1.0rem;
+      font-size: 0.95rem;
+    }
+    .center { text-align: center; }
+
+    .section-title {
+      font-size: 0.9rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      color: #6b7280;
+      margin-top: 0.4rem;
+      margin-bottom: 0.2rem;
+    }
+
+    .choice-grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 0.6rem;
+      margin-bottom: 0.6rem;
+    }
+    .choice-btn {
+      padding: 0.7rem 0.6rem;
+      border-radius: 14px;
+      border: 2px solid #d1d5db;
+      background: #f9fafb;
+      font-size: 0.95rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.15s ease, transform 0.05s ease,
+                  border-color 0.15s ease, box-shadow 0.15s ease;
+    }
+    .choice-btn.selected {
+      background: #2563eb;
+      color: #ffffff;
+      border-color: #1d4ed8;
+      box-shadow: 0 5px 15px rgba(37,99,235,0.35);
+    }
+    .choice-btn:active { transform: translateY(1px); }
+
+    .selected-info {
+      font-size: 0.85rem;
+      color: #6b7280;
+      text-align: center;
+      min-height: 1.2rem;
+      margin-bottom: 0.5rem;
+    }
+
+    .primary-btn {
+      margin-top: 0.9rem;
+      width: 100%;
+      padding: 0.7rem 1rem;
+      font-size: 1.05rem;
+      border-radius: 999px;
+      border: none;
+      cursor: pointer;
+      background: #2563eb;
+      color: white;
+      font-weight: 600;
+      transition: transform 0.05s ease, box-shadow 0.05s ease, background 0.2s ease;
+    }
+    .primary-btn:hover { background: #1d4ed8; }
+    .primary-btn:active {
+      transform: translateY(1px);
+      box-shadow: 0 2px 6px rgba(0,0,0,0.2);
+    }
+    .primary-btn:disabled {
+      background: #9ca3af;
+      cursor: not-allowed;
+      box-shadow: none;
+    }
+
+    .secondary-btn {
+      margin-top: 0.4rem;
+      width: 100%;
+      padding: 0.6rem 1rem;
+      font-size: 1rem;
+      border-radius: 999px;
+      border: 1px solid #d1d5db;
+      cursor: pointer;
+      background: #f9fafb;
+      color: #111827;
+      font-weight: 500;
+      transition: transform 0.05s ease, box-shadow 0.05s ease, background 0.2s ease, border-color 0.2s ease;
+    }
+    .secondary-btn:hover {
+      background: #e5e7eb;
+      border-color: #9ca3af;
+    }
+    .secondary-btn:active {
+      transform: translateY(1px);
+      box-shadow: 0 2px 6px rgba(0,0,0,0.15);
+    }
+
+    .hidden { display: none; }
+
+    /* Algebra-Darstellung */
+    .model-wrapper {
+      display: flex;
+      gap: 1.2rem;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: 0.6rem;
+      flex-wrap: wrap;
+    }
+    .grid-label-col,
+    .grid-label-row {
+      font-weight: 600;
+      font-size: 1rem;
+      color: #374151;
+    }
+    .area-grid {
+      display: grid;
+      grid-template-columns: auto repeat(2, 70px);
+      grid-template-rows: auto repeat(2, 50px);
+      gap: 0;
+      border-collapse: collapse;
+      font-size: 1.1rem;
+    }
+    .area-grid .cell {
+      border: 2px solid #e5e7eb;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .area-grid .top-label {
+      border: none;
+      text-align: center;
+    }
+    .area-grid .left-label {
+      border: none;
+      text-align: center;
+    }
+    .cell-ac { background: #fecaca; }
+    .cell-bc { background: #fed7aa; }
+    .cell-ad { background: #bbf7d0; }
+    .cell-bd { background: #fef9c3; }
+
+    .formula-text {
+      font-size: 0.95rem;
+      color: #374151;
+    }
+    .formula-text code {
+      font-family: "Fira Code", ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+    }
+    .example-text {
+      font-size: 0.9rem;
+      color: #4b5563;
+      margin-top: 0.2rem;
+    }
+
+    /* Quizbereich */
+    .info-row {
+      display: flex;
+      justify-content: space-between;
+      font-size: 0.9rem;
+      color: #4b5563;
+      margin-top: 0.3rem;
+    }
+    .timer {
+      font-weight: 700;
+    }
+    .timer.low { color: #b91c1c; }
+
+    .equation {
+      font-size: 1.6rem;
+      font-weight: 600;
+      margin: 0.7rem 0 0.5rem;
+      text-align: center;
+    }
+    .equation input {
+      width: 6rem;
+      font-size: 1.3rem;
+      padding: 0.15rem 0.3rem;
+      text-align: center;
+      border-radius: 8px;
+      border: 2px solid #d1d5db;
+    }
+
+    .feedback {
+      min-height: 1.4rem;
+      margin-top: 0.4rem;
+      font-weight: 500;
+      text-align: center;
+    }
+    .feedback.ok { color: #15803d; }
+    .feedback.error { color: #b91c1c; }
+
+    .stats {
+      margin-top: 0.6rem;
+      font-size: 0.9rem;
+      color: #374151;
+    }
+
+    /* Arena / Ringkampf */
+    .arena-wrapper {
+      margin-top: 1rem;
+      padding: 0.8rem;
+      border-radius: 14px;
+      background: #f3f4f6;
+      border: 1px solid #e5e7eb;
+    }
+    .arena-header {
+      display: flex;
+      justify-content: space-between;
+      font-size: 0.9rem;
+      margin-bottom: 0.35rem;
+    }
+    .score {
+      font-weight: 600;
+    }
+    .arena {
+      display: grid;
+      grid-template-columns: auto 1fr auto;
+      align-items: center;
+      gap: 0.6rem;
+    }
+    .fighter {
+      font-size: 2.1rem;
+    }
+    .track {
+      display: grid;
+      grid-template-columns: repeat(9, minmax(0, 1fr));
+      gap: 0.12rem;
+      align-items: center;
+    }
+    .track-cell {
+      height: 14px;
+      border-radius: 999px;
+      background: #e5e7eb;
+      position: relative;
+    }
+    .track-cell.mid {
+      background: #d1d5db;
+    }
+    .marker {
+      position: absolute;
+      top: -6px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 18px;
+      height: 18px;
+      border-radius: 50%;
+      background: #fbbf24;
+      box-shadow: 0 0 0 2px rgba(0,0,0,0.08);
+    }
+
+    #result-screen h2 {
+      margin-bottom: 0.3rem;
+    }
+    #result-summary {
+      font-size: 0.95rem;
+      color: #374151;
+    }
+  </style>
+</head>
+<body>
+<div class="app">
+  <h1>2-stelliges Einmaleins – Ringkampf</h1>
+  <div class="subtitle">
+    Zwei zweistellige Faktoren. Nutze den Rechentrick mit dem Flächenmodell, um schnell zu rechnen.
+  </div>
+
+  <!-- Rechenmodell -->
+  <div class="model-wrapper">
+    <div>
+      <div class="area-grid">
+        <div class="cell"></div>
+        <div class="cell top-label">a</div>
+        <div class="cell top-label">b</div>
+
+        <div class="cell left-label">c</div>
+        <div class="cell cell-ac">ac</div>
+        <div class="cell cell-bc">bc</div>
+
+        <div class="cell left-label">d</div>
+        <div class="cell cell-ad">ad</div>
+        <div class="cell cell-bd">bd</div>
+      </div>
+    </div>
+    <div>
+      <div class="formula-text">
+        <code>(a + b) · (c + d) = ac + ad + bc + bd</code>
+      </div>
+      <div class="example-text">
+        Beispiel: <code>15 · 18</code> &rarr;
+        <br>
+        <code>(10 + 5) · (10 + 8)</code> = 10·10 + 10·8 + 5·10 + 5·8<br>
+        = <code>100 + 80 + 50 + 40 = 270</code>
+      </div>
+    </div>
+  </div>
+
+  <!-- STARTSCREEN -->
+  <div id="start-screen">
+    <div class="section-title">Schwierigkeit</div>
+    <div class="choice-grid" id="difficulty-grid">
+      <button type="button" class="choice-btn diff-btn" data-diff="easy">
+        Einfach<br><span style="font-size:0.8rem;">10er-Einmaleins, höchstens 1 Faktor kein Vielfaches von 10<br>(z.B. 20·17)</span>
+      </button>
+      <button type="button" class="choice-btn diff-btn" data-diff="medium">
+        Mittel<br><span style="font-size:0.8rem;">beide Faktoren zwischen 10 und 20</span>
+      </button>
+      <button type="button" class="choice-btn diff-btn" data-diff="hard">
+        Schwierig<br><span style="font-size:0.8rem;">beide Faktoren zwischen 10 und 99</span>
+      </button>
+    </div>
+
+    <div class="selected-info" id="selected-info"></div>
+    <button class="primary-btn" id="start-btn" disabled>Los geht's!</button>
+  </div>
+
+  <!-- QUIZSCREEN -->
+  <div id="quiz-screen" class="hidden">
+    <div class="info-row">
+      <div id="mode-label"></div>
+      <div class="timer" id="timer-display"></div>
+    </div>
+
+    <div class="equation">
+      <span id="factor-a">12</span>
+      &nbsp;·&nbsp;
+      <span id="factor-b">34</span>
+      &nbsp;=&nbsp;
+      <input type="number" id="answer-input" autocomplete="off">
+    </div>
+
+    <div class="center">
+      <button class="primary-btn" id="answer-btn" style="max-width:260px;margin-top:0.7rem;">
+        Antwort prüfen
+      </button>
+    </div>
+
+    <div class="feedback" id="feedback"></div>
+
+    <div class="stats">
+      Aufgaben gelöst: <span id="stat-questions">0</span><br>
+      Spieler-Punkte: <span id="stat-player">0</span> – PC-Punkte: <span id="stat-pc">0</span>
+    </div>
+
+    <div class="arena-wrapper">
+      <div class="arena-header">
+        <div class="score" id="score-text">0 : 0</div>
+        <div style="font-size:0.85rem;color:#6b7280;">
+          Richtig: ein Schritt nach rechts – Falsch/Zeit abgelaufen: ein Schritt nach links.<br>
+          4 Schritte = 1 Punkt, 3 Punkte = Sieg.
+        </div>
+      </div>
+      <div class="arena">
+        <div class="fighter">🤖</div>
+        <div class="track" id="track"></div>
+        <div class="fighter">🤼‍♂️</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- RESULTSCREEN -->
+  <div id="result-screen" class="hidden center">
+    <h2 id="result-title">Fertig!</h2>
+    <p id="result-summary"></p>
+    <p style="margin-top:0.8rem; font-size:0.9rem; color:#4b5563;">
+      Wenn du fertig bist, klicke auf <strong>„Fertig“</strong>, damit LearningView den Auftrag als erledigt markiert.<br>
+      Mit <strong>„Nochmals spielen“</strong> kannst du einen neuen Kampf starten.
+    </p>
+    <button class="primary-btn" id="finish-btn">Fertig</button>
+    <button class="secondary-btn" id="again-btn">Nochmals spielen</button>
+  </div>
+</div>
+
+<script>
+  // --- Konfiguration ---
+  const STEP_WIN = 4;      // 4 Schritte nach links/rechts = Punkt
+  const POINTS_TO_WIN = 3; // 3 Punkte = Spielende
+
+  const TIME_LIMITS = {
+    easy: 45,
+    medium: 30,
+    hard: 15
+  };
+
+  // --- Zustand ---
+  let selectedDifficulty = null; // 'easy' | 'medium' | 'hard'
+
+  let timeLimit = 30;
+  let timeLeft = 30;
+  let timerId = null;
+
+  let currentA = 0;
+  let currentB = 0;
+  let currentResult = 0;
+
+  let position = 0;      // -4..+4, 0 = Mitte
+  let playerPoints = 0;
+  let pcPoints = 0;
+  let questionsCount = 0;
+
+  let gameOver = false;
+
+  // --- DOM ---
+  const startScreen = document.getElementById('start-screen');
+  const quizScreen = document.getElementById('quiz-screen');
+  const resultScreen = document.getElementById('result-screen');
+
+  const diffGrid = document.getElementById('difficulty-grid');
+  const selectedInfo = document.getElementById('selected-info');
+  const startBtn = document.getElementById('start-btn');
+
+  const modeLabel = document.getElementById('mode-label');
+  const timerDisplay = document.getElementById('timer-display');
+  const factorAEl = document.getElementById('factor-a');
+  const factorBEl = document.getElementById('factor-b');
+  const answerInput = document.getElementById('answer-input');
+  const answerBtn = document.getElementById('answer-btn');
+  const feedbackEl = document.getElementById('feedback');
+
+  const statQuestions = document.getElementById('stat-questions');
+  const statPlayer = document.getElementById('stat-player');
+  const statPc = document.getElementById('stat-pc');
+  const scoreText = document.getElementById('score-text');
+  const trackEl = document.getElementById('track');
+
+  const resultTitle = document.getElementById('result-title');
+  const resultSummary = document.getElementById('result-summary');
+  const finishBtn = document.getElementById('finish-btn');
+  const againBtn = document.getElementById('again-btn');
+
+  // --- Hilfsfunktionen ---
+  function randInt(min, max) {
+    return Math.floor(Math.random() * (max - min + 1)) + min;
+  }
+
+  function speak(text) {
+    if ('speechSynthesis' in window) {
+      try {
+        const u = new SpeechSynthesisUtterance(text);
+        u.lang = 'en-US';
+        window.speechSynthesis.speak(u);
+      } catch (e) {
+        console.warn('SpeechSynthesis Fehler:', e);
+      }
+    }
+  }
+
+  // --- Auswahl Schwierigkeit ---
+  diffGrid.querySelectorAll('.diff-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const d = btn.dataset.diff;
+      selectedDifficulty = (selectedDifficulty === d) ? null : d;
+
+      diffGrid.querySelectorAll('.diff-btn').forEach(b => {
+        b.classList.toggle('selected', b.dataset.diff === selectedDifficulty);
+      });
+      updateStartState();
+    });
+  });
+
+  function updateStartState() {
+    if (!selectedDifficulty) {
+      selectedInfo.textContent = 'Bitte eine Schwierigkeit auswählen.';
+      startBtn.disabled = true;
+      return;
+    }
+    let diffText = '';
+    if (selectedDifficulty === 'easy') {
+      diffText = 'Einfach: 10er-Einmaleins, höchstens ein Faktor kein Vielfaches von 10.';
+    } else if (selectedDifficulty === 'medium') {
+      diffText = 'Mittel: beide Faktoren zwischen 10 und 20.';
+    } else {
+      diffText = 'Schwierig: beide Faktoren zwischen 10 und 99.';
+    }
+    selectedInfo.textContent = diffText;
+    startBtn.disabled = false;
+  }
+
+  startBtn.addEventListener('click', startGame);
+
+  function startGame() {
+    timeLimit = TIME_LIMITS[selectedDifficulty] || 30;
+    position = 0;
+    playerPoints = 0;
+    pcPoints = 0;
+    questionsCount = 0;
+    gameOver = false;
+
+    buildTrack();
+    updateTrack();
+    updateStats();
+
+    feedbackEl.textContent = '';
+    feedbackEl.className = 'feedback';
+
+    if (selectedDifficulty === 'easy') {
+      modeLabel.textContent = 'Einfach: 10er-Einmaleins mit zweistelligen Zahlen.';
+    } else if (selectedDifficulty === 'medium') {
+      modeLabel.textContent = 'Mittel: 10–20 · 10–20.';
+    } else {
+      modeLabel.textContent = 'Schwierig: 10–99 · 10–99.';
+    }
+
+    startScreen.classList.add('hidden');
+    resultScreen.classList.add('hidden');
+    quizScreen.classList.remove('hidden');
+
+    nextQuestion();
+  }
+
+  // --- Aufgaben-Generator ---
+  function generateTask() {
+    let a, b;
+
+    if (selectedDifficulty === 'easy') {
+      // Beide zweistellig (10–99), höchstens EIN Faktor, der kein Vielfaches von 10 ist
+      // -> mindestens einer ist Vielfaches von 10
+      while (true) {
+        a = randInt(10, 99);
+        b = randInt(10, 99);
+        const aIs10 = (a % 10 === 0);
+        const bIs10 = (b % 10 === 0);
+        const nonMultiples = (aIs10 ? 0 : 1) + (bIs10 ? 0 : 1);
+        if (nonMultiples <= 1 && (aIs10 || bIs10)) break;
+      }
+    } else if (selectedDifficulty === 'medium') {
+      // Beide zweistellig, 10–20
+      a = randInt(10, 20);
+      b = randInt(10, 20);
+    } else {
+      // Schwierig: beide zweistellig, 10–99
+      a = randInt(10, 99);
+      b = randInt(10, 99);
+    }
+
+    return { a, b, result: a * b };
+  }
+
+  function nextQuestion() {
+    if (gameOver) return;
+    const t = generateTask();
+    currentA = t.a;
+    currentB = t.b;
+    currentResult = t.result;
+
+    factorAEl.textContent = currentA;
+    factorBEl.textContent = currentB;
+
+    answerInput.value = '';
+    answerInput.focus();
+
+    resetTimer();
+  }
+
+  // --- Timer ---
+  function resetTimer() {
+    if (timerId) clearInterval(timerId);
+    timeLeft = timeLimit;
+    updateTimerUI();
+
+    timerId = setInterval(() => {
+      timeLeft--;
+      updateTimerUI();
+      if (timeLeft <= 0) {
+        clearInterval(timerId);
+        timerId = null;
+        handleAnswer(null, true); // Timeout = falsch
+      }
+    }, 1000);
+  }
+
+  function updateTimerUI() {
+    timerDisplay.textContent = `Restzeit: ${timeLeft}s`;
+    timerDisplay.classList.toggle('low', timeLeft <= 5);
+  }
+
+  // --- Arena / Marker ---
+  function buildTrack() {
+    trackEl.innerHTML = '';
+    for (let i = 0; i < 9; i++) {
+      const cell = document.createElement('div');
+      cell.className = 'track-cell';
+      if (i === 4) cell.classList.add('mid');
+      trackEl.appendChild(cell);
+    }
+  }
+
+  function updateTrack() {
+    const cells = trackEl.querySelectorAll('.track-cell');
+    cells.forEach(c => {
+      const marker = c.querySelector('.marker');
+      if (marker) c.removeChild(marker);
+    });
+    const idx = position + 4; // -4..+4 -> 0..8
+    if (idx >= 0 && idx < cells.length) {
+      const marker = document.createElement('div');
+      marker.className = 'marker';
+      cells[idx].appendChild(marker);
+    }
+    scoreText.textContent = `${playerPoints} : ${pcPoints}`;
+  }
+
+  function updateStats() {
+    statQuestions.textContent = questionsCount.toString();
+    statPlayer.textContent = playerPoints.toString();
+    statPc.textContent = pcPoints.toString();
+  }
+
+  // --- Antwortbehandlung ---
+  answerBtn.addEventListener('click', () => {
+    const val = answerInput.value.trim();
+    const num = val === '' ? null : Number(val);
+    handleAnswer(num, false);
+  });
+
+  answerInput.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      const val = answerInput.value.trim();
+      const num = val === '' ? null : Number(val);
+      handleAnswer(num, false);
+    }
+  });
+
+  function handleAnswer(value, isTimeout) {
+    if (gameOver) return;
+
+    if (timerId) {
+      clearInterval(timerId);
+      timerId = null;
+    }
+
+    const correct = value === currentResult;
+    questionsCount++;
+
+    if (!isTimeout && correct) {
+      feedbackEl.textContent = 'Richtig! 👍';
+      feedbackEl.className = 'feedback ok';
+      speak('Yeah!');
+      position = Math.min(position + 1, STEP_WIN);
+    } else {
+      feedbackEl.textContent = isTimeout
+        ? 'Zeit abgelaufen – ein Schritt für den PC.'
+        : 'Leider falsch – ein Schritt für den PC.';
+      feedbackEl.className = 'feedback error';
+      speak('Ouch!');
+      position = Math.max(position - 1, -STEP_WIN);
+    }
+
+    if (position >= STEP_WIN) {
+      playerPoints++;
+      position = 0;
+      feedbackEl.textContent += ' Du gewinnst eine Runde!';
+      feedbackEl.className = 'feedback ok';
+    } else if (position <= -STEP_WIN) {
+      pcPoints++;
+      position = 0;
+      feedbackEl.textContent += ' Der PC gewinnt eine Runde.';
+      feedbackEl.className = 'feedback error';
+    }
+
+    updateTrack();
+    updateStats();
+
+    if (playerPoints >= POINTS_TO_WIN || pcPoints >= POINTS_TO_WIN) {
+      endGame();
+    } else {
+      setTimeout(() => {
+        nextQuestion();
+      }, 800);
+    }
+  }
+
+  function endGame() {
+    gameOver = true;
+    if (timerId) clearInterval(timerId);
+
+    quizScreen.classList.add('hidden');
+    resultScreen.classList.remove('hidden');
+
+    const win = playerPoints > pcPoints;
+    resultTitle.textContent = win ? 'Sieg! 🎉' : 'Niederlage 😕';
+    resultSummary.innerHTML =
+      `Du hast insgesamt <strong>${questionsCount}</strong> Aufgaben gelöst.<br>` +
+      `Punkte: <strong>Du ${playerPoints}</strong> – <strong>PC ${pcPoints}</strong>.`;
+    finishBtn.disabled = false;
+    finishBtn.textContent = 'Fertig';
+  }
+
+  // LearningView-Feedback
+  finishBtn.addEventListener('click', () => {
+    finishBtn.disabled = true;
+    finishBtn.textContent = 'Erledigt ✔';
+    try {
+      if (window.parent && window.parent !== window) {
+        window.parent.postMessage('AppSolved', '*');
+      }
+    } catch (e) {
+      console.warn('LearningView-AppSolved nicht möglich:', e);
+    }
+  });
+
+  againBtn.addEventListener('click', () => {
+    resultScreen.classList.add('hidden');
+    startScreen.classList.remove('hidden');
+  });
+
+  // --- Init ---
+  (function init() {
+    buildTrack();
+    updateTrack();
+    updateStartState();
+  })();
+</script>
+</body>
+</html>
