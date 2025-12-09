@@ -666,14 +666,14 @@
     if (!isTimeout && correct) {
       feedbackEl.textContent = 'Richtig! 👍';
       feedbackEl.className = 'feedback ok';
-      speak('Yeah!');
+      speak('Correct!');
       position = Math.min(position + 1, STEP_WIN);
     } else {
       feedbackEl.textContent = isTimeout
         ? 'Zeit abgelaufen – ein Schritt für den PC.'
         : 'Leider falsch – ein Schritt für den PC.';
       feedbackEl.className = 'feedback error';
-      speak('Ouch!');
+      speak('Sorry!');
       position = Math.max(position - 1, -STEP_WIN);
     }
 
